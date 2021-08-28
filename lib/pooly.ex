@@ -1,18 +1,32 @@
 defmodule Pooly do
-  @moduledoc """
-  Documentation for `Pooly`.
-  """
+  # make Pooly an OTP application
+  use Application
 
-  @doc """
-  Hello world.
+  alias Pooly.{
+    Server,
+    Supervisor
+  }
 
-  ## Examples
+  # start/2 is called first when Pooly is initialized
+  # predefine a pool configuration and call start_pool/1 out of convenience
+  def start(_type, _args) do
+    pool_config = [mfa: {SampleWorker, :start_link, []}, size: 0]
+    start_pool(pool_config)
+  end
 
-      iex> Pooly.hello()
-      :world
+  def start_pool(pool_config) do
+    Supervisor.start_link(pool_config)
+  end
 
-  """
-  def hello do
-    :world
+  def checkout do
+    Server.checkout()
+  end
+
+  def checkin(worker_pid) do
+    Server.checkin(worker_pid)
+  end
+
+  def status do
+    Server.status()
   end
 end
