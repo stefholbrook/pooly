@@ -10,7 +10,7 @@ defmodule Pooly do
   # start/2 is called first when Pooly is initialized
   # predefine a pool configuration and call start_pool/1 out of convenience
   def start(_type, _args) do
-    pool_config = [mfa: {SampleWorker, :start_link, []}, size: 0]
+    pool_config = [mfa: {SampleWorker, :start_link, []}, size: 5]
     start_pool(pool_config)
   end
 
