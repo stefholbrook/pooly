@@ -35,6 +35,8 @@ defmodule Pooly.Server do
 
   # validate the pool config and initialize the state
   def init([sup, pool_config]) when is_pid(sup) do
+    # set the server process to trap exits (can now handle :EXIT message from workers)
+    Process.flag(:trap_exit, true)
     # update init to create monitors field in ets table
     monitors = :ets.new(:monitors, [:private])
     # init(pool_config, %State{sup: sup})
@@ -72,6 +74,41 @@ defmodule Pooly.Server do
     workers = prepopulate(size, worker_sup)
     # update the state with the worker Supervisor pid and its supervised workers
     {:noreply, %{state | worker_sup: worker_sup, workers: workers}}
+  end
+
+  # monitor the :DOWN message of a consumer process (when a consumer process crashes, it shouldn't crash the server process)
+  def handle_info({:DOWN, ref, _, _, _}, state = %{monitors: monitors, workers: workers}) do
+    # when a consumer process goes down, match the reference in the monitors ETS table
+    case :ets.match(monitors, {:"$1", ref}) do
+      [[pid]] ->
+        # delete the monitor
+        true = :ets.delete(monitors, pid)
+        # and add the worker back into the state and return the worker to the pool
+        new_state = %{state | workers: [pid | workers]}
+        {:noreply, new_state}
+
+      [[]] ->
+        {:noreply, state}
+    end
+  end
+
+  def handle_info({:EXIT, pid, _reason}, state = %{monitors: monitors, workers: workers, worker_sup: worker_sup}) do
+    # when a worker process exits unexpectedly, lookup the entry in the monitors ETS table
+    case :ets.lookup(monitors, pid) do
+      # if a process is found
+      [{pid, ref}] ->
+        # stop monitoring it
+        true = Process.demonitor(ref)
+        # remove it from the table
+        true = :ets.delete(monitors, pid)
+
+        # create a new worker and add it to the server state
+        new_state = %{state | workers: [new_worker(worker_sup) | workers]}
+
+        {:noreply, new_state}
+      [[]] ->
+        {:noreply, state}
+    end
   end
 
   # pattern-match the pid of the client, workers, and monitors
