@@ -12,22 +12,29 @@ Supervisor excercise from Elixir & OTP book
 
 ### Design
 
-* When is starts, only Pooly.Server is attached to Pooly.Supervisor
-* When the pool is started with a pool configuration, Pooly, Server first verifies that the pool configuration is valid.
-* Then it sends a :start_worker_supervisor to Pooly.Supervisor. This message instructs Pooly.Spervisor to start Pooly.WorkerSupervisor.
-* Pooly.WorkerSupervisor is told to start a number of worker processes based on the size specified in the pool configuration.
+* The top-level supervisor `Pooly.Supervisor` supervises a `Pooly.Server` and a `PoolsSupervisor`
+* The `PoolsSupervisor` in turn supervises many `PoolSupervisors`
+* Each `PoolSupervisor` supervises its own `PoolServer` and `WorkerSupervisor`
 
 ```
-      +----------------+
-      |Pooly.Supervisor|
-      +----------------+
-          /       \
-  +------------+ +------------------------+
-  |Pooly.Server| | Pooly.WorkerSupervisor |
-  +------------+ +------------------------+
-                      /      |     \
-                +------+ +---|--+ +------+
-                |Worker| |Worker| |Worker|
-                +------+ +------+ +------+
+                              +----------------+
+                              |Pooly.Supervisor|
+                              +----------------+
+                                  /       \
+                        +------------+  +----------------+
+                        |Pooly.Server|  |Pooly.Supervisor|
+                        +------------+  +----------------+
+                                          /              \
+                        +----------------+               +----------------+
+                        |Pooly.Supervisor|               |Pooly.Supervisor|
+                        +----------------+               +----------------+
+                         /       \                              /       \
+            +------------+  +------------------------+        +------------+  +------------------------+
+            |Pooly.Server|  | Pooly.WorkerSupervisor |        |Pooly.Server|  | Pooly.WorkerSupervisor |
+            +------------+  +------------------------+        +------------+  +------------------------+
+                                /      |     \                                      /      |     \
+                          +------+ +---|--+ +------+                          +------+ +---|--+ +------+
+                          |Worker| |Worker| |Worker|                          |Worker| |Worker| |Worker|
+                          +------+ +------+ +------+                          +------+ +------+ +------+
 ```
 https://textik.com/

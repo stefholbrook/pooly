@@ -10,23 +10,38 @@ defmodule Pooly do
   # start/2 is called first when Pooly is initialized
   # predefine a pool configuration and call start_pool/1 out of convenience
   def start(_type, _args) do
-    pool_config = [mfa: {SampleWorker, :start_link, []}, size: 5]
-    start_pool(pool_config)
+    # take configuration for multiple pools
+    pools_config = [
+      [
+        name: "Pool1",
+        mfa: {SampleWorker, :start_link, []}, size: 2
+      ],
+      [
+        name: "Pool2",
+        mfa: {SampleWorker, :start_link, []}, size: 3
+      ],
+      [
+        name: "Pool3",
+        mfa: {SampleWorker, :start_link, []}, size: 4
+      ],
+    ]
+
+    start_pool(pools_config)
   end
 
-  def start_pool(pool_config) do
-    Supervisor.start_link(pool_config)
+  def start_pools(pools_config) do
+    Supervisor.start_link(pools_config)
   end
 
-  def checkout do
-    Server.checkout()
+  def checkout(pool_name) do
+    Server.checkout(pool_name)
   end
 
-  def checkin(worker_pid) do
-    Server.checkin(worker_pid)
+  def checkin(pool_name, worker_pid) do
+    Server.checkin(pool_name, worker_pid)
   end
 
-  def status do
-    Server.status()
+  def status(pool_name) do
+    Server.status(pool_name)
   end
 end
