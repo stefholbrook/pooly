@@ -12,21 +12,12 @@ defmodule Pooly do
   def start(_type, _args) do
     # take configuration for multiple pools
     pools_config = [
-      [
-        name: "Pool1",
-        mfa: {SampleWorker, :start_link, []}, size: 2
-      ],
-      [
-        name: "Pool2",
-        mfa: {SampleWorker, :start_link, []}, size: 3
-      ],
-      [
-        name: "Pool3",
-        mfa: {SampleWorker, :start_link, []}, size: 4
-      ],
-    ]
+        [name: "Pool1", mfa: {SampleWorker, :start_link, []}, size: 2],
+        [name: "Pool2", mfa: {SampleWorker, :start_link, []}, size: 3],
+        [name: "Pool3", mfa: {SampleWorker, :start_link, []}, size: 4],
+      ]
 
-    start_pool(pools_config)
+    start_pools(pools_config)
   end
 
   def start_pools(pools_config) do

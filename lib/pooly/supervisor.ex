@@ -10,8 +10,8 @@ defmodule Pooly.Supervisor do
     children = [
       supervisor(Pooly.PoolsSupervisor, []),
       # can remove `self()` because name is being set to __MODULE__ and we can reference module name instead of PID
-      # worker(Pooly.Server, [self(), pools_config])
-      worker(Pooly.Server, [self(), pools_config])
+      # worker(Pooly.Server, [pools_config])
+      worker(Pooly.Server, [pools_config])
     ]
     # if the server goes down take the worker Supervisor with it
     opts = [strategy: :one_for_all]

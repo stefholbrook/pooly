@@ -7,8 +7,8 @@ defmodule Pooly.WorkerSupervisor do
 
   # pattern match the args to make sure they're a tuple containing three elements
   # m = module, f = function, a = list of args
-  def start_link({_, _, _} = mfa) do
-    Supervisor.start_link(__MODULE__, mfa)
+  def start_link(pool_server, {_, _, _} = mfa) do
+    Supervisor.start_link(__MODULE__, [pool_server, mfa])
   end
 
   ######################
@@ -16,9 +16,14 @@ defmodule Pooly.WorkerSupervisor do
   ######################
 
   # pattern match the individual elements from the three-element tuple
-  def init({m, f, a} = _x) do
+  def init([pool_server, {m, f, a}]) do
+    Process.link(pool_server)
     # specify that the worker is always to be restarted
-    worker_opts = [restart: :permanent, function: f]
+    worker_opts = [
+      restart: :temporary,
+      shutdown: 5000,
+      function: f
+    ]
     # specify the function to start the worker
     # worker/3 is the child specification (recipe for supervisor to spawn children)
     children = [worker(m, a, worker_opts)]
@@ -28,8 +33,4 @@ defmodule Pooly.WorkerSupervisor do
     # helper function to create the child specification
     supervise(children, opts)
   end
-
-  #####################
-  # PRIVATE FUNCTIONS #
-  #####################
 end
